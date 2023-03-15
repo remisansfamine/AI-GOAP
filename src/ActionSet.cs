@@ -1,106 +1,94 @@
 ﻿using GOAP;
 
-class GetAxeAction : GOAP.Action
+class MoveToWeapon : GOAP.Action
 {
-    public GetAxeAction() : base(5)
-    {
-    }
-
-    public override bool IsValid(WorldState worldState) => !worldState.hasPickaxe;
-    public override WorldState ApplyEffects(in WorldState worldState)
-    {
-        WorldState newWorldstate = worldState;
-        newWorldstate.hasAxe = true;
-        return newWorldstate;
-    }
-
-
-    public override void Execute()
-    {
-        Console.WriteLine("Gettin axe");
-    }
-}
-
-class ChopWoodAction : GOAP.Action
-{
-    public ChopWoodAction() : base(10)
-    {
-    }
-
-    public override bool IsValid(WorldState worldState) => worldState.hasAxe;
-    public override WorldState ApplyEffects(in WorldState worldState)
-    {
-        WorldState newWorldstate = worldState;
-        newWorldstate.hasWood = true;
-        return newWorldstate;
-    }
-
-    public override void Execute()
-    {
-        Console.WriteLine("Gettin wood");
-    }
-}
-
-
-class GetSticksAction : GOAP.Action
-{
-    public GetSticksAction() : base(20)
-    {
-    }
+    public override int cost => 5;
 
     public override bool IsValid(WorldState worldState) => true;
     public override WorldState ApplyEffects(in WorldState worldState)
     {
         WorldState newWorldstate = worldState;
-        newWorldstate.hasWood = true;
+        newWorldstate.isNearWeapon = true;
+        newWorldstate.isNearEnemy = false;
         return newWorldstate;
     }
 
     public override void Execute()
     {
-        Console.WriteLine("Gettin sticks");
+        Console.WriteLine("Moving to the weapon");
     }
 }
 
-class GetPickaxeAction : GOAP.Action
+class PickUpWeapon : GOAP.Action
 {
-    public GetPickaxeAction() : base(5)
-    {
-    }
+    public override int cost => 1;
 
-    public override bool IsValid(WorldState worldState) => !worldState.hasAxe;
-
-
+    public override bool IsValid(WorldState worldState) => worldState.isNearWeapon;
     public override WorldState ApplyEffects(in WorldState worldState)
     {
         WorldState newWorldstate = worldState;
-        newWorldstate.hasPickaxe = true;
+        newWorldstate.hasWeapon = true;
+        newWorldstate.isNearWeapon = false;
         return newWorldstate;
     }
 
     public override void Execute()
     {
-        Console.WriteLine("Gettin pickaxe");
+        Console.WriteLine("Picking up the weapon");
     }
 }
 
-class GetRockAction : GOAP.Action
+class MoveToEnemy : GOAP.Action
 {
-    public GetRockAction() : base(10)
-    {
-    }
+    public override int cost => 5;
 
-    public override bool IsValid(WorldState worldState) => worldState.hasPickaxe;
+    public override bool IsValid(WorldState worldState) => true;
     public override WorldState ApplyEffects(in WorldState worldState)
     {
         WorldState newWorldstate = worldState;
-        newWorldstate.hasRock = true;
+        newWorldstate.isNearWeapon = false;
+        newWorldstate.isNearEnemy = true;
         return newWorldstate;
     }
 
+    public override void Execute()
+    {
+        Console.WriteLine("Moving to the enemy");
+    }
+}
+
+class KillEnemy : GOAP.Action
+{
+    public override int cost => 15;
+
+    public override bool IsValid(WorldState worldState) => !worldState.isHurt && worldState.isNearEnemy && worldState.hasWeapon;
+    public override WorldState ApplyEffects(in WorldState worldState)
+    {
+        WorldState newWorldstate = worldState;
+        newWorldstate.isEnemyDead = true;
+        return newWorldstate;
+    }
 
     public override void Execute()
     {
-        Console.WriteLine("Gettin rock");
+        Console.WriteLine("Killing the enemy");
+    }
+}
+
+class HealSelf : GOAP.Action
+{
+    public override int cost => 20;
+
+    public override bool IsValid(WorldState worldState) => worldState.isHurt && !worldState.isNearEnemy;
+    public override WorldState ApplyEffects(in WorldState worldState)
+    {
+        WorldState newWorldstate = worldState;
+        newWorldstate.isHurt = false;
+        return newWorldstate;
+    }
+
+    public override void Execute()
+    {
+        Console.WriteLine("Healing self up");
     }
 }
