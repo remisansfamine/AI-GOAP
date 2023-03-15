@@ -1,37 +1,24 @@
 ﻿
 namespace GOAP
 {
-
-    struct WorldState
+    class Node<StateT>
     {
-        public WorldState() { }
+        public StateT worldState = default(StateT);
 
-        public bool isEnemyDead = false;
-        public bool hasWeapon = false;
-        public bool isNearWeapon = false;
-        public bool isNearEnemy = false;
-        public bool isHurt = false;
-    }
+        public Node<StateT> parent = null;
 
-    class Node
-    {
-        public WorldState worldState = new WorldState();
+        public List<Node<StateT>> children = new List<Node<StateT>>();
 
-        public Node parent = null;
-
-        public List<Node> children = new List<Node>();
-
-        public Action action = null;
+        public Action<StateT> action = null;
 
         public int runningCost = 0;
     }
 
-    abstract class Action
+    abstract class Action<StateT>
     {
+        public virtual bool IsValid(StateT worldState) => false;
 
-        public virtual bool IsValid(WorldState worldState) => false;
-
-        public virtual WorldState ApplyEffects(in WorldState worldState) => worldState;
+        public virtual StateT ApplyEffects(in StateT worldState) => worldState;
 
         public abstract int cost { get; }
 
@@ -40,14 +27,14 @@ namespace GOAP
 
     class Planner
     {
-        static private List<Action> CreateActionSubSet(List<Action> usableActions, Action toRemoveAction)
+        static private List<Action<StateT>> CreateActionSubSet<StateT>(List<Action<StateT>> usableActions, Action<StateT> toRemoveAction)
         {
             return usableActions.Where(action => action != toRemoveAction).ToList();
         }
 
-        static private Node CreateNode(Node parent, WorldState newWorldState, Action action)
+        static private Node<StateT> CreateNode<StateT>(Node<StateT> parent, StateT newWorldState, Action<StateT> action)
         {
-            Node newNode = new Node();
+            Node<StateT> newNode = new Node<StateT>();
             newNode.action = action;
             newNode.worldState = newWorldState;
             newNode.parent = parent;
@@ -57,36 +44,48 @@ namespace GOAP
             return newNode;
         }
 
-        static public void BuildGraph(Node parent, List<Node> leaves, List<Action> availableActions, WorldState goal, Func<WorldState, WorldState, bool> goalAchived)
+        static public void BuildGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, StateT goal, Func<StateT, StateT, bool> goalAchieved)
         {
-            foreach (Action action in availableActions)
+            int cheapestCost = int.MaxValue;
+            BuildGraph(parent, leaves, availableActions, goal, goalAchieved, ref cheapestCost);
+        }
+
+        static public void BuildGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, StateT goal, Func<StateT, StateT, bool> goalAchieved, ref int cheapestCost)
+        {
+            foreach (Action<StateT> action in availableActions)
             {
-                if (!action.IsValid(parent.worldState)) // check preconditions
+                if (!action.IsValid(parent.worldState)) // Check preconditions
                     continue;
 
-                WorldState newWorldState = action.ApplyEffects(parent.worldState);
-                Node node = CreateNode(parent, newWorldState, action); // node.cost = parent.cost + action.cost
+                StateT newWorldState = action.ApplyEffects(parent.worldState);
+                Node<StateT> node = CreateNode(parent, newWorldState, action); // node.cost = parent.cost + action.cost
 
-                if (goalAchived(newWorldState, goal))
+                // Prune branches that which are more expensive than the cheapest one
+                if (node.runningCost > cheapestCost)
+                    continue;
+
+                if (goalAchieved(newWorldState, goal))
                 {
+                    cheapestCost = Math.Min(cheapestCost, node.runningCost);
+
                     leaves.Add(node);
                     continue;
                 }
 
                 // used action is removed
-                List<Action> actionsSubSet = CreateActionSubSet(availableActions, action);
+                List<Action<StateT>> actionsSubSet = CreateActionSubSet(availableActions, action);
 
                 // recursive call on the new node
-                BuildGraph(node, leaves, actionsSubSet, goal, goalAchived);
+                BuildGraph(node, leaves, actionsSubSet, goal, goalAchieved, ref cheapestCost);
             }
         }
 
-        static public List<Node> GetBestLeaves(List<Node> leaves) => leaves.Where((ws) => ws.runningCost == leaves.Min(ws => ws.runningCost)).ToList();
-        static public List<Node> UnrollLeaf(Node toUnroll)
+        static public List<Node<StateT>> GetBestLeaves<StateT>(List<Node<StateT>> leaves) => leaves.Where((ws) => ws.runningCost == leaves.Min(ws => ws.runningCost)).ToList();
+        static public List<Node<StateT>> UnrollLeaf<StateT>(Node<StateT> toUnroll)
         {
-            List<Node> bestBranch = new List<Node>();
+            List<Node<StateT>> bestBranch = new List<Node<StateT>>();
 
-            Node currentNode = toUnroll;
+            Node<StateT> currentNode = toUnroll;
 
             while (currentNode.parent is not null)
             {
@@ -94,7 +93,7 @@ namespace GOAP
                 currentNode = currentNode.parent;
             }
 
-            return bestBranch.Reverse<Node>().ToList();
+            return bestBranch.Reverse<Node<StateT>>().ToList();
         }
     }
 }
