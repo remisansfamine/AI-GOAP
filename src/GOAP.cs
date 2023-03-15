@@ -20,7 +20,7 @@ namespace GOAP
 
         public virtual StateT ApplyEffects(in StateT worldState) => worldState;
 
-        public abstract int cost { get; }
+        public abstract int GetCost(in StateT worldState);
 
         public abstract void Execute();
     }
@@ -39,7 +39,7 @@ namespace GOAP
             newNode.worldState = newWorldState;
             newNode.parent = parent;
             parent.children.Add(newNode);
-            newNode.runningCost = parent.runningCost + action.cost;
+            newNode.runningCost = parent.runningCost + action.GetCost(newWorldState);
 
             return newNode;
         }
@@ -60,7 +60,7 @@ namespace GOAP
                 StateT newWorldState = action.ApplyEffects(parent.worldState);
                 Node<StateT> node = CreateNode(parent, newWorldState, action); // node.cost = parent.cost + action.cost
 
-                // Prune branches that which are more expensive than the cheapest one
+                // Prune branches which are more expensive than the cheapest one
                 if (node.runningCost > cheapestCost)
                     continue;
 

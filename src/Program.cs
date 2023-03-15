@@ -16,7 +16,7 @@ internal class Program
         EEnemyStates goal = new EEnemyStates();
         goal = EEnemyStates.IS_ENEMY_DEAD;
 
-        List<GOAP.Action<EEnemyStates>> availableActions = new List<GOAP.Action<EEnemyStates>>() { new HealSelf(), new MoveToWeapon(), new PickUpWeapon(), new MoveToEnemy(), new KillEnemy(), new Test(), new Test() };
+        List<GOAP.Action<EEnemyStates>> availableActions = new List<GOAP.Action<EEnemyStates>>() { new GarbageAction(70), new MoveToEnemy(), new GarbageAction(50), new PickUpWeapon(), new GarbageAction(50), new GarbageAction(50), new HealSelf(), new GarbageAction(50), new MoveToWeapon(), new KillEnemy(), new GarbageAction(50), new GarbageAction(50) };
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();

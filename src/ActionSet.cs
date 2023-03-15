@@ -1,5 +1,4 @@
 ﻿using GOAP;
-using System.Collections;
 
 [Flags]
 public enum EEnemyStates : ulong
@@ -13,7 +12,8 @@ public enum EEnemyStates : ulong
 
 class MoveToWeapon : GOAP.Action<EEnemyStates>
 {
-    public override int cost => 5;
+    public override int GetCost(in EEnemyStates worldState) => 2;
+
 
     public override bool IsValid(EEnemyStates worldState) => true;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
@@ -33,7 +33,7 @@ class MoveToWeapon : GOAP.Action<EEnemyStates>
 
 class PickUpWeapon : GOAP.Action<EEnemyStates>
 {
-    public override int cost => 1;
+    public override int GetCost(in EEnemyStates worldState) => (EEnemyStates.IS_NEAR_ENEMY & worldState) != 0 ? 2 : 1;
 
     public override bool IsValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_NEAR_WEAPON) != 0;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
@@ -53,7 +53,7 @@ class PickUpWeapon : GOAP.Action<EEnemyStates>
 
 class MoveToEnemy : GOAP.Action<EEnemyStates>
 {
-    public override int cost => 5;
+    public override int GetCost(in EEnemyStates worldState) => (EEnemyStates.IS_NEAR_WEAPON & worldState) != 0 ? 2 : 1;
 
     public override bool IsValid(EEnemyStates worldState) => true;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
@@ -73,12 +73,11 @@ class MoveToEnemy : GOAP.Action<EEnemyStates>
 
 class KillEnemy : GOAP.Action<EEnemyStates>
 {
-    public override int cost => 15;
+    public override int GetCost(in EEnemyStates worldState) => (EEnemyStates.HAS_WEAPON & worldState) != 0 ? 1 : 10;
 
     public override bool IsValid(EEnemyStates worldState)
     {
-        const EEnemyStates nearEnemyAndHasWeapon = EEnemyStates.IS_NEAR_ENEMY | EEnemyStates.HAS_WEAPON;
-        return (worldState & EEnemyStates.IS_HURT) == 0 && (nearEnemyAndHasWeapon & worldState) == nearEnemyAndHasWeapon;
+        return (worldState & EEnemyStates.IS_HURT) == 0 && (EEnemyStates.IS_NEAR_ENEMY & worldState) != 0;
     }
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -96,7 +95,7 @@ class KillEnemy : GOAP.Action<EEnemyStates>
 
 class HealSelf : GOAP.Action<EEnemyStates>
 {
-    public override int cost => 20;
+    public override int GetCost(in EEnemyStates worldState) => 5;
     public override bool IsValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_HURT) != 0;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -113,9 +112,14 @@ class HealSelf : GOAP.Action<EEnemyStates>
     }
 }
 
-class Test : GOAP.Action<EEnemyStates>
+class GarbageAction : GOAP.Action<EEnemyStates>
 {
-    public override int cost => 70;
+    private int internalCost = 0;
+    public GarbageAction(int cost)
+    {
+        this.internalCost = cost;
+    }
+    public override int GetCost(in EEnemyStates worldState) => internalCost;
 
     public override bool IsValid(EEnemyStates worldState) => true;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
