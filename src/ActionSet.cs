@@ -13,11 +13,17 @@ class GetAxeAction : GOAP.Action
         newWorldstate.hasAxe = true;
         return newWorldstate;
     }
+
+
+    public override void Execute()
+    {
+        Console.WriteLine("Gettin axe");
+    }
 }
 
-class GetWoodAction : GOAP.Action
+class ChopWoodAction : GOAP.Action
 {
-    public GetWoodAction() : base(10)
+    public ChopWoodAction() : base(10)
     {
     }
 
@@ -27,6 +33,32 @@ class GetWoodAction : GOAP.Action
         WorldState newWorldstate = worldState;
         newWorldstate.hasWood = true;
         return newWorldstate;
+    }
+
+    public override void Execute()
+    {
+        Console.WriteLine("Gettin wood");
+    }
+}
+
+
+class GetSticksAction : GOAP.Action
+{
+    public GetSticksAction() : base(20)
+    {
+    }
+
+    public override bool IsValid(WorldState worldState) => true;
+    public override WorldState ApplyEffects(in WorldState worldState)
+    {
+        WorldState newWorldstate = worldState;
+        newWorldstate.hasWood = true;
+        return newWorldstate;
+    }
+
+    public override void Execute()
+    {
+        Console.WriteLine("Gettin sticks");
     }
 }
 
@@ -45,6 +77,11 @@ class GetPickaxeAction : GOAP.Action
         newWorldstate.hasPickaxe = true;
         return newWorldstate;
     }
+
+    public override void Execute()
+    {
+        Console.WriteLine("Gettin pickaxe");
+    }
 }
 
 class GetRockAction : GOAP.Action
@@ -59,5 +96,11 @@ class GetRockAction : GOAP.Action
         WorldState newWorldstate = worldState;
         newWorldstate.hasRock = true;
         return newWorldstate;
+    }
+
+
+    public override void Execute()
+    {
+        Console.WriteLine("Gettin rock");
     }
 }

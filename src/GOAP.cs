@@ -16,12 +16,16 @@ namespace GOAP
     {
         public WorldState worldState = new WorldState();
 
+        public Node parent = null;
+
         public List<Node> children = new List<Node>();
+
+        public Action action = null;
 
         public int cost = 0;
     }
 
-    class Action
+    abstract class Action
     {
         protected Action(int cost)
         {
@@ -33,6 +37,8 @@ namespace GOAP
         public virtual WorldState ApplyEffects(in WorldState worldState) => worldState;
 
         public int cost { get; private set; } = 0;
+
+        public abstract void Execute();
     }
 
     class Planner
@@ -45,17 +51,16 @@ namespace GOAP
         private Node CreateNode(Node parent, WorldState newWorldState, Action action)
         {
             Node newNode = new Node();
+            newNode.action = action;
             newNode.worldState = newWorldState;
-
+            newNode.parent = parent;
             parent.children.Add(newNode);
             newNode.cost = parent.cost + action.cost;
 
             return newNode;
         }
 
-        private bool GoalAchieved(WorldState worldState, WorldState goal) => worldState.Equals(goal);
-
-        public void BuildGraph(Node parent, List<Node> leaves, List<Action> availableActions, WorldState goal)
+        public void BuildGraph(Node parent, List<Node> leaves, List<Action> availableActions, WorldState goal, Func<WorldState, WorldState, bool> goalAchived)
         {
             foreach (Action action in availableActions)
             {
@@ -65,7 +70,7 @@ namespace GOAP
                 WorldState newWorldState = action.ApplyEffects(parent.worldState);
                 Node node = CreateNode(parent, newWorldState, action); // node.cost = parent.cost + action.cost
 
-                if (GoalAchieved(newWorldState, goal))
+                if (goalAchived(newWorldState, goal))
                 {
                     leaves.Add(node);
                     continue;
@@ -75,7 +80,7 @@ namespace GOAP
                 List<Action> actionsSubSet = CreateActionSubSet(availableActions, action);
 
                 // recursive call on the new node
-                BuildGraph(node, leaves, actionsSubSet, goal);
+                BuildGraph(node, leaves, actionsSubSet, goal, goalAchived);
             }
         }
     }
