@@ -36,7 +36,6 @@ class PickUpWeapon : GOAP.Action<EEnemyStates>
     public override int cost => 1;
 
     public override bool IsValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_NEAR_WEAPON) != 0;
-    //public override bool IsValid(WorldState<EEnemyStates> worldState) => worldState.isNearWeapon;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
         EEnemyStates newWorldstate = worldState;
@@ -76,16 +75,10 @@ class KillEnemy : GOAP.Action<EEnemyStates>
 {
     public override int cost => 15;
 
-    //public override bool IsValid(WorldState<EEnemyStates> worldState) => !worldState.isHurt && worldState.isNearEnemy && worldState.hasWeapon;
     public override bool IsValid(EEnemyStates worldState)
     {
-        bool hurt = (worldState & EEnemyStates.IS_HURT) != 0;
-        bool nearenemy = (worldState & EEnemyStates.IS_NEAR_ENEMY) != 0;
-        bool nearweapon = (worldState & EEnemyStates.IS_NEAR_WEAPON) != 0;
-        bool hasweapon = (worldState & EEnemyStates.HAS_WEAPON) != 0;
-        bool enemydead = (worldState & EEnemyStates.IS_ENEMY_DEAD) != 0;
-
-        return (worldState & EEnemyStates.IS_HURT) == 0 && ((EEnemyStates.IS_NEAR_ENEMY) & worldState) != 0 && ((EEnemyStates.HAS_WEAPON) & worldState) != 0;
+        const EEnemyStates nearEnemyAndHasWeapon = EEnemyStates.IS_NEAR_ENEMY | EEnemyStates.HAS_WEAPON;
+        return (worldState & EEnemyStates.IS_HURT) == 0 && (nearEnemyAndHasWeapon & worldState) == nearEnemyAndHasWeapon;
     }
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -104,8 +97,6 @@ class KillEnemy : GOAP.Action<EEnemyStates>
 class HealSelf : GOAP.Action<EEnemyStates>
 {
     public override int cost => 20;
-
-    //public override bool IsValid(WorldState<EEnemyStates> worldState) => worldState.isHurt && !worldState.isNearEnemy;
     public override bool IsValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_HURT) != 0;
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
