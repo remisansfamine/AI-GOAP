@@ -6,7 +6,7 @@ using static System.Collections.Specialized.BitVector32;
 
 internal class Program
 {
-    static bool RunAction(GOAP.Action<EEnemyStates> action)
+    static bool RunAction(GOAP.Action<ENPCStates> action)
     {
         bool actionIsRunning = true;
         while (actionIsRunning)
@@ -23,11 +23,11 @@ internal class Program
         return true;
     }
 
-    static void ExecutePlan(List<Node<EEnemyStates>> plan, bool useFowarding)
+    static void ExecutePlan(List<Node<ENPCStates>> plan, bool useFowarding)
     {
-        Queue<GOAP.Action<EEnemyStates>> finalPlan = new Queue<GOAP.Action<EEnemyStates>>(plan.Select(node => node.action));
+        Queue<GOAP.Action<ENPCStates>> finalPlan = new Queue<GOAP.Action<ENPCStates>>(plan.Select(node => node.action));
 
-        foreach (GOAP.Action<EEnemyStates> action in finalPlan)
+        foreach (GOAP.Action<ENPCStates> action in finalPlan)
         {
             bool actionSucceed = RunAction(action);
 
@@ -36,10 +36,10 @@ internal class Program
         }
     }
 
-    static void DisplayActions(List<GOAP.Action<EEnemyStates>> actions)
+    static void DisplayActions(List<GOAP.Action<ENPCStates>> actions)
     {
         foreach (var action in actions)
-            Utils.TimedWrite($"- {action.GetType().Name}\n", 10);
+            Utils.TimedWrite($"- {action.GetType().Name}\n");
     }
 
     static bool AskForForwardPlanning()
@@ -65,9 +65,9 @@ internal class Program
         return shouldUseForward.Value;
     }
 
-    static void AskToAddGarbageActions(List<GOAP.Action<EEnemyStates>> actions)
+    static void AskToAddGarbageActions(List<GOAP.Action<ENPCStates>> actions)
     {
-        Utils.TimedWrite("Do you want to add GarbageActions to try the performance ? (true/false)\n", 10);
+        Utils.TimedWrite("Do you want to add GarbageActions to try the performance ? (true/false)\n");
 
         bool? shouldAddGarbageAction = null;
 
@@ -117,7 +117,7 @@ internal class Program
         Utils.TimedWrite($"{garbageActionCount} GarbageAction(s) have been added");
     }
 
-    static string PlanAsString(List<Node<EEnemyStates>> branch) => string.Join(" -> ", branch.Select(node => node.action.GetType().Name));
+    static string PlanAsString(List<Node<ENPCStates>> branch) => string.Join(" -> ", branch.Select(node => node.action.GetType().Name));
 
     static void Main(string[] args)
     {
@@ -125,13 +125,13 @@ internal class Program
         Utils.TimedWrite("Your goal is to elaborate a plan to kill [PLAYER_NAME].\n");
         Utils.TimedWrite("Heres the different actions you can make:\n");
 
-        List<GOAP.Action<EEnemyStates>> availableActions = new List<GOAP.Action<EEnemyStates>>() { new MoveToWeapon(), new KillEnemy(), new PickUpWeapon(), new MoveToEnemy(), new HealSelf() };
+        List<GOAP.Action<ENPCStates>> availableActions = new List<GOAP.Action<ENPCStates>>() { new MoveToWeapon(), new KillEnemy(), new PickUpWeapon(), new MoveToEnemy(), new HealSelf() };
 
         DisplayActions(availableActions);
         AskToAddGarbageActions(availableActions);
 
-        EEnemyStates initialState = EEnemyStates.IS_HURT;
-        EEnemyStates goalActiveState = EEnemyStates.IS_ENEMY_DEAD;
+        ENPCStates initialState = ENPCStates.IS_HURT;
+        ENPCStates goalActiveState = ENPCStates.IS_PLAYER_DEAD;
 
         Utils.TimedWrite($"Your initial state is : {initialState}\n");
         Utils.TimedWrite($"And you have to meet these following criteria: {goalActiveState}\n");
@@ -141,12 +141,12 @@ internal class Program
         Utils.TimedWrite($"Your plan will be elaborated using {(useForwardPlanning ? "forward" : "backward")} planning...\n", 25);
         Utils.TimedWrite($"Good luck.\n", 25);
 
-        List<Node<EEnemyStates>> leaves = new List<Node<EEnemyStates>>();
+        List<Node<ENPCStates>> leaves = new List<Node<ENPCStates>>();
 
 
         Stopwatch stopWatch = new Stopwatch();
 
-        var goalChecker = (EEnemyStates state, EnemyGoal goal) => (goal.activeStates == EEnemyStates.NONE || (state & goal.activeStates) == goal.activeStates) && (goal.inactiveStates == EEnemyStates.NONE || (state & goal.inactiveStates) == 0);
+        var goalChecker = (ENPCStates state, EnemyGoal goal) => (goal.activeStates == ENPCStates.NONE || (state & goal.activeStates) == goal.activeStates) && (goal.inactiveStates == ENPCStates.NONE || (state & goal.inactiveStates) == 0);
 
         stopWatch.Start();
 
@@ -157,8 +157,8 @@ internal class Program
         }
         else
         {
-            var initialStateGoal = new EnemyGoal(initialState, EEnemyStates.IS_ENEMY_DEAD | EEnemyStates.HAS_WEAPON | EEnemyStates.IS_NEAR_WEAPON | EEnemyStates.IS_NEAR_ENEMY);
-            Planner<EnemyGoal>.BuildReversedGraph(EEnemyStates.IS_ENEMY_DEAD | EEnemyStates.IS_NEAR_ENEMY | EEnemyStates.HAS_WEAPON, leaves, availableActions, initialStateGoal, goalChecker);
+            var initialStateGoal = new EnemyGoal(initialState, ENPCStates.IS_PLAYER_DEAD | ENPCStates.HAS_WEAPON | ENPCStates.IS_NEAR_WEAPON | ENPCStates.IS_NEAR_PLAYER);
+            Planner<EnemyGoal>.BuildReversedGraph(ENPCStates.IS_PLAYER_DEAD | ENPCStates.IS_NEAR_PLAYER | ENPCStates.HAS_WEAPON, leaves, availableActions, initialStateGoal, goalChecker);
         }
 
         stopWatch.Stop();
@@ -172,17 +172,19 @@ internal class Program
             return;
         }
 
-        List<Node<EEnemyStates>> bestLeaves = Planner<EnemyGoal>.GetBestLeaves(leaves);
-        List<Node<EEnemyStates>> bestBranch = Planner<EnemyGoal>.UnrollLeaf(bestLeaves.First(), useForwardPlanning);
+        List<Node<ENPCStates>> bestLeaves = Planner<EnemyGoal>.GetBestLeaves(leaves);
+        List<Node<ENPCStates>> bestBranch = Planner<EnemyGoal>.UnrollLeaf(bestLeaves.First(), useForwardPlanning);
 
-        Utils.TimedWrite($"Your plan is the following: ", 10);
+        Utils.TimedWrite($"Your plan is the following: ");
 
         string planAsString = PlanAsString(bestBranch);
 
-        Utils.TimedWrite($"{planAsString} \n", 10);
+        Utils.TimedWrite($"{planAsString} \n");
 
-        Utils.TimedWrite($"And you took {ts} to elaborate it.\n", 10);
+        Utils.TimedWrite($"And you took {ts} to elaborate it.\n");
 
         ExecutePlan(bestBranch, useForwardPlanning);
+
+        Utils.TimedWrite($"Good job, you managed to kill [PLAYER_NAME]\n");
     }
 }
