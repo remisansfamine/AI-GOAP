@@ -28,15 +28,17 @@ namespace GOAP
 
     abstract class Action<StateT>
     {
-        public virtual bool IsValid(StateT worldState) => false;
+        public virtual bool IsForwardValid(StateT worldState) => false;
 
-        public virtual bool IsReverseValid(StateT worldState) => false;
+        public virtual bool IsBackwardValid(StateT worldState) => false;
 
         public virtual StateT ApplyEffects(in StateT worldState) => worldState;
 
         public virtual StateT ApplyReversedEffects(in StateT worldState) => worldState;
 
         public abstract int GetCost(in StateT worldState);
+
+        public virtual int GetReverseCost(in StateT worldState) => GetCost(worldState);
 
         public abstract void Execute();
     }
@@ -48,14 +50,14 @@ namespace GOAP
             return usableActions.Where(action => action != toRemoveAction).ToList();
         }
 
-        static private Node<StateT> CreateNode<StateT>(Node<StateT> parent, StateT newWorldState, Action<StateT> action)
+        static private Node<StateT> CreateNode<StateT>(Node<StateT> parent, StateT newWorldState, Action<StateT> action, int runningCost)
         {
             Node<StateT> newNode = new Node<StateT>();
             newNode.action = action;
             newNode.worldState = newWorldState;
             newNode.parent = parent;
             parent.children.Add(newNode);
-            newNode.runningCost = parent.runningCost + action.GetCost(newWorldState);
+            newNode.runningCost = runningCost;
 
             return newNode;
         }
@@ -87,15 +89,17 @@ namespace GOAP
         {
             foreach (Action<StateT> action in availableActions)
             {
-                if (!action.IsValid(parent.worldState)) // Check preconditions
+                if (!action.IsForwardValid(parent.worldState)) // Check preconditions
                     continue;
 
+                int runningCost = parent.runningCost + action.GetCost(parent.worldState);
                 StateT newWorldState = action.ApplyEffects(parent.worldState);
-                Node<StateT> node = CreateNode(parent, newWorldState, action); // node.cost = parent.cost + action.cost
 
                 // Prune branches which are more expensive than the cheapest one
-                if (node.runningCost > cheapestCost)
+                if (runningCost > cheapestCost)
                     continue;
+
+                Node<StateT> node = CreateNode(parent, newWorldState, action, runningCost); // node.cost = parent.cost + action.cost
 
                 if (goalChecker(newWorldState, goal))
                 {
@@ -145,11 +149,13 @@ namespace GOAP
         {
             foreach (Action<StateT> action in availableActions)
             {
-                if (!action.IsReverseValid(parent.worldState)) // Check preconditions
+                if (!action.IsBackwardValid(parent.worldState)) // Check preconditions
                     continue;
 
+                int runningCost = parent.runningCost + action.GetReverseCost(parent.worldState);
                 StateT newWorldState = action.ApplyReversedEffects(parent.worldState);
-                Node<StateT> node = CreateNode(parent, newWorldState, action); // node.cost = parent.cost + action.cost
+
+                Node<StateT> node = CreateNode(parent, newWorldState, action, runningCost); // node.cost = parent.cost + action.cost
 
                 if (goalChecker(newWorldState, initialState))
                 {

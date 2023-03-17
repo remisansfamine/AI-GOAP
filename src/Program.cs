@@ -9,19 +9,21 @@ internal class Program
     {
         List<Node<EEnemyStates>> leaves = new List<Node<EEnemyStates>>();
 
+        EEnemyStates initialState = EEnemyStates.IS_HURT;
+
         // List<GOAP.Action<EEnemyStates>> availableActions = new List<GOAP.Action<EEnemyStates>>() { new GarbageAction(70), new MoveToEnemy(), new GarbageAction(50), new PickUpWeapon(), new GarbageAction(50), new GarbageAction(50), new HealSelf(), new GarbageAction(50), new MoveToWeapon(), new KillEnemy(), new GarbageAction(50), new GarbageAction(50) };
-        List<GOAP.Action<EEnemyStates>> availableActions = new List<GOAP.Action<EEnemyStates>>() { new KillEnemy(), new MoveToEnemy(), new PickUpWeapon(), new MoveToWeapon(), new HealSelf() };
+        List<GOAP.Action<EEnemyStates>> availableActions = new List<GOAP.Action<EEnemyStates>>() { new MoveToWeapon(), new KillEnemy(), new PickUpWeapon(), new MoveToEnemy(), new HealSelf() };
 
         Stopwatch stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        var goalChecker = (EEnemyStates state, EnemyGoal goal) => (goal.activeStates == EEnemyStates.NONE || (state & goal.activeStates) == goal.activeStates) && (goal.inactiveStates == EEnemyStates.NONE || (state & goal.inactiveStates) != goal.inactiveStates);
+        var goalChecker = (EEnemyStates state, EnemyGoal goal) => (goal.activeStates == EEnemyStates.NONE || (state & goal.activeStates) == goal.activeStates) && (goal.inactiveStates == EEnemyStates.NONE || (state & goal.inactiveStates) == 0);
 
         //var fowardGoal = new EnemyGoal(EEnemyStates.IS_ENEMY_DEAD);
-        //Planner<Goal<EEnemyStates>>.BuildGraph(EEnemyStates.IS_HURT, leaves, availableActions, , goalChecker);
+        //Planner<Goal<EEnemyStates>>.BuildGraph(initialState, leaves, availableActions, fowardGoal, goalChecker);
 
-        var initialStateGoal = new EnemyGoal(EEnemyStates.IS_HURT, EEnemyStates.IS_ENEMY_DEAD | EEnemyStates.HAS_WEAPON);
-        Planner<EnemyGoal>.BuildReversedGraph(EEnemyStates.IS_ENEMY_DEAD | EEnemyStates.HAS_WEAPON, leaves, availableActions, initialStateGoal, goalChecker);
+        var initialStateGoal = new EnemyGoal(initialState, EEnemyStates.IS_ENEMY_DEAD | EEnemyStates.HAS_WEAPON | EEnemyStates.IS_NEAR_WEAPON | EEnemyStates.IS_NEAR_ENEMY);
+        Planner<EnemyGoal>.BuildReversedGraph(EEnemyStates.IS_ENEMY_DEAD | EEnemyStates.IS_NEAR_ENEMY | EEnemyStates.HAS_WEAPON, leaves, availableActions, initialStateGoal, goalChecker);
 
         stopWatch.Stop();
 

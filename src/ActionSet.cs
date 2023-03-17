@@ -23,14 +23,15 @@ class MoveToWeapon : GOAP.Action<EEnemyStates>
 {
     public override int GetCost(in EEnemyStates worldState) => 2;
 
-    public override bool IsValid(EEnemyStates worldState) => true;
+    public override bool IsForwardValid(EEnemyStates worldState) => true;
 
-    public override bool IsReverseValid(EEnemyStates worldState) => (EEnemyStates.HAS_WEAPON & worldState) == 0;
+    public override bool IsBackwardValid(EEnemyStates worldState) => (EEnemyStates.HAS_WEAPON & worldState) == 0;
 
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
         EEnemyStates newWorldstate = worldState;
         newWorldstate |= EEnemyStates.IS_NEAR_WEAPON;
+        newWorldstate &= ~EEnemyStates.IS_NEAR_ENEMY;
 
         return newWorldstate;
     }
@@ -53,9 +54,9 @@ class PickUpWeapon : GOAP.Action<EEnemyStates>
 {
     public override int GetCost(in EEnemyStates worldState) => (EEnemyStates.IS_NEAR_ENEMY & worldState) != 0 ? 2 : 1;
 
-    public override bool IsValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_NEAR_WEAPON) != 0;
+    public override bool IsForwardValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_NEAR_WEAPON) != 0;
 
-    public override bool IsReverseValid(EEnemyStates worldState) => true;
+    public override bool IsBackwardValid(EEnemyStates worldState) => true;
 
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -84,9 +85,9 @@ class MoveToEnemy : GOAP.Action<EEnemyStates>
 {
     public override int GetCost(in EEnemyStates worldState) => (EEnemyStates.IS_NEAR_WEAPON & worldState) != 0 ? 2 : 1;
 
-    public override bool IsValid(EEnemyStates worldState) => true;
+    public override bool IsForwardValid(EEnemyStates worldState) => true;
 
-    public override bool IsReverseValid(EEnemyStates worldState) => (EEnemyStates.IS_ENEMY_DEAD & worldState) == 0;
+    public override bool IsBackwardValid(EEnemyStates worldState) => (EEnemyStates.IS_ENEMY_DEAD & worldState) == 0;
 
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -115,12 +116,12 @@ class KillEnemy : GOAP.Action<EEnemyStates>
 {
     public override int GetCost(in EEnemyStates worldState) => (EEnemyStates.HAS_WEAPON & worldState) != 0 ? 1 : 10;
 
-    public override bool IsValid(EEnemyStates worldState)
+    public override bool IsForwardValid(EEnemyStates worldState)
     {
         return (worldState & EEnemyStates.IS_HURT) == 0 && (EEnemyStates.IS_NEAR_ENEMY & worldState) != 0;
     }
 
-    public override bool IsReverseValid(EEnemyStates worldState) => true;
+    public override bool IsBackwardValid(EEnemyStates worldState) => true;
 
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -148,9 +149,9 @@ class HealSelf : GOAP.Action<EEnemyStates>
 {
     public override int GetCost(in EEnemyStates worldState) => 5;
 
-    public override bool IsValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_HURT) != 0;
+    public override bool IsForwardValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_HURT) != 0;
 
-    public override bool IsReverseValid(EEnemyStates worldState) => true;
+    public override bool IsBackwardValid(EEnemyStates worldState) => (worldState & EEnemyStates.IS_ENEMY_DEAD) == 0;
 
     public override EEnemyStates ApplyEffects(in EEnemyStates worldState)
     {
@@ -185,7 +186,7 @@ class GarbageAction : GOAP.Action<EEnemyStates>
     }
     public override int GetCost(in EEnemyStates worldState) => internalCost;
 
-    public override bool IsValid(EEnemyStates worldState) => true;
+    public override bool IsForwardValid(EEnemyStates worldState) => true;
 
     public override void Execute()
     {
