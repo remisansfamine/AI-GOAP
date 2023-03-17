@@ -44,9 +44,15 @@ class MoveToWeapon : GOAP.Action<EEnemyStates>
         return newWorldstate;
     }
 
-    public override void Execute()
+    int currentStep = 0;
+
+    public override EActionState Execute()
     {
-        Console.WriteLine("Moving to the weapon");
+        Console.WriteLine($"Moving to the weapon {20 - currentStep} step left");
+
+        currentStep++;
+
+        return currentStep >= 20 ? EActionState.SUCCESS : EActionState.RUNNING;
     }
 }
 
@@ -75,9 +81,11 @@ class PickUpWeapon : GOAP.Action<EEnemyStates>
         return newWorldstate;
     }
 
-    public override void Execute()
+    public override EActionState Execute()
     {
         Console.WriteLine("Picking up the weapon");
+
+        return EActionState.SUCCESS;
     }
 }
 
@@ -106,9 +114,15 @@ class MoveToEnemy : GOAP.Action<EEnemyStates>
         return newWorldstate;
     }
 
-    public override void Execute()
+    int currentStep = 0;
+
+    public override EActionState Execute()
     {
-        Console.WriteLine("Moving to the enemy");
+        Console.WriteLine($"Moving to the enemy {20 - currentStep} step left");
+
+        currentStep++;
+
+        return currentStep >= 20 ? EActionState.SUCCESS : EActionState.RUNNING;
     }
 }
 
@@ -139,9 +153,10 @@ class KillEnemy : GOAP.Action<EEnemyStates>
         return newWorldstate;
     }
 
-    public override void Execute()
+    public override EActionState Execute()
     {
         Console.WriteLine("Killing the enemy");
+        return EActionState.SUCCESS;
     }
 }
 
@@ -171,9 +186,10 @@ class HealSelf : GOAP.Action<EEnemyStates>
         return newWorldstate;
     }
 
-    public override void Execute()
+    public override EActionState Execute()
     {
         Console.WriteLine("Healing self up");
+        return EActionState.SUCCESS;
     }
 }
 
@@ -188,8 +204,9 @@ class GarbageAction : GOAP.Action<EEnemyStates>
 
     public override bool IsForwardValid(EEnemyStates worldState) => true;
 
-    public override void Execute()
+    public override EActionState Execute()
     {
         Console.WriteLine("Test");
+        return EActionState.SUCCESS;
     }
 }

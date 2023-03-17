@@ -26,6 +26,13 @@ namespace GOAP
         public int runningCost = 0;
     }
 
+    public enum EActionState
+    {
+        RUNNING,
+        SUCCESS,
+        FAILURE
+    }
+
     abstract class Action<StateT>
     {
         public virtual bool IsForwardValid(StateT worldState) => false;
@@ -40,7 +47,7 @@ namespace GOAP
 
         public virtual int GetReverseCost(in StateT worldState) => GetCost(worldState);
 
-        public abstract void Execute();
+        public abstract EActionState Execute();
     }
 
     class Planner<GoalT>
