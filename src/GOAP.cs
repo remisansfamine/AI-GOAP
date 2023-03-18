@@ -92,10 +92,11 @@ namespace GOAP
                 if (runningCost > cheapestCost)
                     continue;
 
-                Node<StateT> node = CreateNode(parent, newWorldState, action, runningCost); // node.cost = parent.cost + action.cost
+                Node<StateT> node = CreateNode(parent, newWorldState, action, runningCost); // node.cost = parent.cost + action.cost(worldState)
 
                 if (goalChecker(newWorldState, goal))
                 {
+                    // Save cheapest cost when a branch of the plan is complete
                     if (cheapestCost.HasValue)
                         cheapestCost = Math.Min(cheapestCost.Value, node.runningCost);
 
@@ -103,10 +104,10 @@ namespace GOAP
                     continue;
                 }
 
-                // used action is removed
+                // Used action is removed
                 List<Action<StateT>> actionsSubSet = CreateActionSubSet(availableActions, action);
 
-                // recursive call on the new node
+                // Recursive call on the new node
                 BuildGraph(node, leaves, actionsSubSet, goal, goalChecker, ref cheapestCost);
             }
         }

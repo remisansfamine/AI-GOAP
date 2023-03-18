@@ -1,8 +1,5 @@
-﻿using System;
-using System.Diagnostics;
-using System.Numerics;
+﻿using System.Diagnostics;
 using GOAP;
-using static System.Collections.Specialized.BitVector32;
 
 internal class Program
 {
@@ -161,10 +158,11 @@ internal class Program
         bool useForwardPlanning = AskForForwardPlanning();
 
         Utils.TimedWrite($"Your plan will be elaborated using {(useForwardPlanning ? "forward" : "backward")} planning...\n", 25);
-        Utils.TimedWrite($"Good luck.\n", 25);
 
         bool usePruning = AskForPruning();
         Utils.TimedWrite($"Your plan will be elaborated {(usePruning ? "" : "without" )}using pruning...\n", 25);
+
+        Utils.TimedWrite($"Good luck.\n", 25);
 
         List<Node<ENPCStates>> leaves = new List<Node<ENPCStates>>();
 
@@ -211,5 +209,7 @@ internal class Program
         ExecutePlan(bestBranch, useForwardPlanning);
 
         Utils.TimedWrite($"Good job, you managed to kill [PLAYER_NAME]\n");
+
+        Console.ReadKey();
     }
 }
