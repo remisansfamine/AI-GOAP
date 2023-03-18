@@ -69,30 +69,16 @@ namespace GOAP
             return newNode;
         }
 
-        static public void BuildGraph<StateT>(StateT initialState, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT goal, Func<StateT, GoalT, bool> goalChecker)
+        static public void BuildGraph<StateT>(StateT initialState, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT goal, Func<StateT, GoalT, bool> goalChecker, bool usePruning)
         {
             Node<StateT> parent = new Node<StateT>();
             parent.worldState = initialState;
 
-            int cheapestCost = int.MaxValue;
+            int? cheapestCost = usePruning ? int.MaxValue : null;
             BuildGraph(parent, leaves, availableActions, goal, goalChecker, ref cheapestCost);
         }
 
-        static public void BuildGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT goal, Func<StateT, GoalT, bool> goalChecker)
-        {
-            int cheapestCost = int.MaxValue;
-            BuildGraph(parent, leaves, availableActions, goal, goalChecker, ref cheapestCost);
-        }
-
-        static public void BuildGraph<StateT>(StateT initialState, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT goal, Func<StateT, GoalT, bool> goalChecker, ref int cheapestCost)
-        {
-            Node<StateT> parent = new Node<StateT>();
-            parent.worldState = initialState;
-
-            BuildGraph(parent, leaves, availableActions, goal, goalChecker, ref cheapestCost);
-        }
-
-        static public void BuildGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT goal, Func<StateT, GoalT, bool> goalChecker, ref int cheapestCost)
+        static public void BuildGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT goal, Func<StateT, GoalT, bool> goalChecker, ref int? cheapestCost)
         {
             foreach (Action<StateT> action in availableActions)
             {
@@ -110,7 +96,8 @@ namespace GOAP
 
                 if (goalChecker(newWorldState, goal))
                 {
-                    cheapestCost = Math.Min(cheapestCost, node.runningCost);
+                    if (cheapestCost.HasValue)
+                        cheapestCost = Math.Min(cheapestCost.Value, node.runningCost);
 
                     leaves.Add(node);
                     continue;
@@ -121,6 +108,48 @@ namespace GOAP
 
                 // recursive call on the new node
                 BuildGraph(node, leaves, actionsSubSet, goal, goalChecker, ref cheapestCost);
+            }
+        }
+
+        static public void BuildReversedGraph<StateT>(StateT goal, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT initialState, Func<StateT, GoalT, bool> goalChecker, bool usePruning)
+        {
+            Node<StateT> parent = new Node<StateT>();
+            parent.worldState = goal;
+
+            int? cheapestCost = usePruning ? int.MaxValue : null;
+            BuildReversedGraph(parent, leaves, availableActions, initialState, goalChecker, ref cheapestCost);
+        }
+
+        static public void BuildReversedGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT initialState, Func<StateT, GoalT, bool> goalChecker, ref int? cheapestCost)
+        {
+            foreach (Action<StateT> action in availableActions)
+            {
+                if (!action.IsBackwardValid(parent.worldState)) // Check preconditions
+                    continue;
+
+                int runningCost = parent.runningCost + action.GetReverseCost(parent.worldState);
+                StateT newWorldState = action.ApplyReversedEffects(parent.worldState);
+
+                // Prune branches which are more expensive than the cheapest one
+                if (runningCost > cheapestCost)
+                    continue;
+
+                Node<StateT> node = CreateNode(parent, newWorldState, action, runningCost); // node.cost = parent.cost + action.cost
+
+                if (goalChecker(newWorldState, initialState))
+                {
+                    if (cheapestCost.HasValue)
+                        cheapestCost = Math.Min(cheapestCost.Value, node.runningCost);
+
+                    leaves.Add(node);
+                    continue;
+                }
+
+                // used action is removed
+                List<Action<StateT>> actionsSubSet = CreateActionSubSet(availableActions, action);
+
+                // recursive call on the new node
+                BuildReversedGraph(node, leaves, actionsSubSet, initialState, goalChecker, ref cheapestCost);
             }
         }
 
@@ -142,40 +171,6 @@ namespace GOAP
                 bestBranch.Reverse();
 
             return bestBranch;
-        }
-
-        static public void BuildReversedGraph<StateT>(StateT goal, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT initialState, Func<StateT, GoalT, bool> goalChecker)
-        {
-            Node<StateT> parent = new Node<StateT>();
-            parent.worldState = goal;
-
-            BuildReversedGraph(parent, leaves, availableActions, initialState, goalChecker);
-        }
-
-        static public void BuildReversedGraph<StateT>(Node<StateT> parent, List<Node<StateT>> leaves, List<Action<StateT>> availableActions, GoalT initialState, Func<StateT, GoalT, bool> goalChecker)
-        {
-            foreach (Action<StateT> action in availableActions)
-            {
-                if (!action.IsBackwardValid(parent.worldState)) // Check preconditions
-                    continue;
-
-                int runningCost = parent.runningCost + action.GetReverseCost(parent.worldState);
-                StateT newWorldState = action.ApplyReversedEffects(parent.worldState);
-
-                Node<StateT> node = CreateNode(parent, newWorldState, action, runningCost); // node.cost = parent.cost + action.cost
-
-                if (goalChecker(newWorldState, initialState))
-                {
-                    leaves.Add(node);
-                    continue;
-                }
-
-                // used action is removed
-                List<Action<StateT>> actionsSubSet = CreateActionSubSet(availableActions, action);
-
-                // recursive call on the new node
-                BuildReversedGraph(node, leaves, actionsSubSet, initialState, goalChecker);
-            }
         }
     }
 }

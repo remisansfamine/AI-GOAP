@@ -54,12 +54,12 @@ class MoveToWeapon : GOAP.Action<ENPCStates>
         if (currentStep >= maxStep)
         {
             Console.Write("\r" + new string(' ', Console.BufferWidth));
-            Utils.TimedWrite("\rMoved to the weapon\n", 0);
+            Utils.TimedWrite("\r-> Moved to the weapon\n", 0);
 
             return EActionState.SUCCESS;
         }
 
-        Utils.DrawProgressBar("Moving to the weapon ", currentStep, maxStep);
+        Utils.DrawProgressBar("-> Moving to the weapon ", currentStep, maxStep);
 
         Thread.Sleep(100);
 
@@ -94,7 +94,7 @@ class PickUpWeapon : GOAP.Action<ENPCStates>
 
     public override EActionState Execute()
     {
-        Utils.TimedWrite("Picked up the weapon\n");
+        Utils.TimedWrite("-> Picked up the weapon\n");
 
         return EActionState.SUCCESS;
     }
@@ -135,12 +135,12 @@ class MoveToEnemy : GOAP.Action<ENPCStates>
         if (currentStep >= maxStep)
         {
             Console.Write("\r" + new string(' ', Console.BufferWidth));
-            Utils.TimedWrite("\rMoved to [PLAYER_NAME]\n", 0);
+            Utils.TimedWrite("\r-> Moved to [PLAYER_NAME]\n", 0);
 
             return EActionState.SUCCESS;
         }
 
-        Utils.DrawProgressBar("Moving to [PLAYER_NAME] ", currentStep, maxStep);
+        Utils.DrawProgressBar("-> Moving to [PLAYER_NAME] ", currentStep, maxStep);
 
         Thread.Sleep(100);
 
@@ -177,7 +177,7 @@ class KillEnemy : GOAP.Action<ENPCStates>
 
     public override EActionState Execute()
     {
-        Utils.TimedWrite("Killed the weapon\n");
+        Utils.TimedWrite("-> Killed [PLAYER_NAME]\n");
 
         return EActionState.SUCCESS;
     }
@@ -211,7 +211,7 @@ class HealSelf : GOAP.Action<ENPCStates>
 
     public override EActionState Execute()
     {
-        Utils.TimedWrite("Healed self up\n");
+        Utils.TimedWrite("-> Healed self up\n");
 
         return EActionState.SUCCESS;
     }
@@ -230,7 +230,7 @@ class GarbageAction : GOAP.Action<ENPCStates>
 
     public override EActionState Execute()
     {
-        Utils.TimedWrite("Test\n");
+        Utils.TimedWrite("-> Test\n");
 
         return EActionState.SUCCESS;
     }

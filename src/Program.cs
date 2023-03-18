@@ -64,6 +64,28 @@ internal class Program
 
         return shouldUseForward.Value;
     }
+    static bool AskForPruning()
+    {
+        Utils.TimedWrite("Do you want to use pruning ? It can dramatically increase performance with forward planning. (true/false)\n");
+
+        bool? shouldUseForward = null;
+
+        while (shouldUseForward is null)
+        {
+            string? forwardResponse = Console.ReadLine();
+
+            if (forwardResponse is not null && Boolean.TryParse(forwardResponse, out bool value))
+            {
+                shouldUseForward = value;
+            }
+            else
+            {
+                Utils.TimedWrite("Boolean value is not recognized, please try again. (true/false)\n");
+            }
+        }
+
+        return shouldUseForward.Value;
+    }
 
     static void AskToAddGarbageActions(List<GOAP.Action<ENPCStates>> actions)
     {
@@ -91,7 +113,7 @@ internal class Program
             return;
         }
 
-        Utils.TimedWrite("How many GarbageAction do you want to add ? (max = 15)\n");
+        Utils.TimedWrite("How many GarbageAction do you want to add ? (max = 50)\n");
 
         int? countInput = null;
 
@@ -109,7 +131,7 @@ internal class Program
             }
         }
 
-        int garbageActionCount = Math.Min(countInput.Value, 15);
+        int garbageActionCount = Math.Min(countInput.Value, 50);
 
         for (int i = 0; i < garbageActionCount; i++)
             actions.Add(new GarbageAction(5));
@@ -141,8 +163,10 @@ internal class Program
         Utils.TimedWrite($"Your plan will be elaborated using {(useForwardPlanning ? "forward" : "backward")} planning...\n", 25);
         Utils.TimedWrite($"Good luck.\n", 25);
 
-        List<Node<ENPCStates>> leaves = new List<Node<ENPCStates>>();
+        bool usePruning = AskForPruning();
+        Utils.TimedWrite($"Your plan will be elaborated {(usePruning ? "" : "without" )}using pruning...\n", 25);
 
+        List<Node<ENPCStates>> leaves = new List<Node<ENPCStates>>();
 
         Stopwatch stopWatch = new Stopwatch();
 
@@ -152,13 +176,14 @@ internal class Program
 
         if (useForwardPlanning)
         {
-            var fowardGoal = new EnemyGoal(goalActiveState);
-            Planner<EnemyGoal>.BuildGraph(initialState, leaves, availableActions, fowardGoal, goalChecker);
+            EnemyGoal fowardGoal = new EnemyGoal(goalActiveState);
+            Planner<EnemyGoal>.BuildGraph(initialState, leaves, availableActions, fowardGoal, goalChecker, usePruning);
         }
         else
         {
-            var initialStateGoal = new EnemyGoal(initialState, ENPCStates.IS_PLAYER_DEAD | ENPCStates.HAS_WEAPON | ENPCStates.IS_NEAR_WEAPON | ENPCStates.IS_NEAR_PLAYER);
-            Planner<EnemyGoal>.BuildReversedGraph(ENPCStates.IS_PLAYER_DEAD | ENPCStates.IS_NEAR_PLAYER | ENPCStates.HAS_WEAPON, leaves, availableActions, initialStateGoal, goalChecker);
+            ENPCStates completeGoal = ENPCStates.IS_PLAYER_DEAD | ENPCStates.IS_NEAR_PLAYER | ENPCStates.HAS_WEAPON;
+            EnemyGoal initialStateGoal = new EnemyGoal(initialState, ENPCStates.IS_PLAYER_DEAD | ENPCStates.HAS_WEAPON | ENPCStates.IS_NEAR_WEAPON | ENPCStates.IS_NEAR_PLAYER);
+            Planner<EnemyGoal>.BuildReversedGraph(completeGoal, leaves, availableActions, initialStateGoal, goalChecker, usePruning);
         }
 
         stopWatch.Stop();
